@@ -8,6 +8,9 @@ from time import sleep
 from typing import Optional, Tuple
 from base_webs import DefaultWeb, SppWeb
 from common_defs import StatusInfo, ResponseStatus
+from logger import log_settings
+
+app_log = log_settings()
 
 
 class Authorize:
@@ -33,10 +36,10 @@ class Authorize:
             return self.driver.find_element(by=by, value=value)
         except NoSuchElementException:
             self.driver.close()
-            print(f"{value} not found by {by}")
+            app_log.error(f"{value} not found by {by}")
             return None
         except TimeoutException:
-            print(f"Timeout error for {value} {by}")
+            app_log.error(f"Timeout error for {value} {by}")
             return None
 
     def _find_field_in_by_list(self, value: str) -> Optional[WebElement]:
@@ -60,6 +63,7 @@ class Authorize:
                     return self.resp_inv_path
             except NoSuchElementException:
                 self.driver.close()
+                app_log.error(f"element not found `{self.service.login_button}`")
                 return self.resp_inv_path
 
     def login(self) -> StatusInfo:
@@ -79,10 +83,11 @@ class Authorize:
             sleep(1)
             return self.resp_ok
         except NoSuchElementException:
+            app_log.error(f"username or pwd element is not found while login")
             self.driver.close()
             return self.resp_inv_path
         except Exception as ex:
-            print(f"Error: {ex}")
+            app_log.error(f"{ex}")
             self.driver.close()
             return StatusInfo(ResponseStatus.unable_to_check, f"{ex}")
 
@@ -99,12 +104,13 @@ class Authorize:
             else:
                 return self.resp_inv_path
         except InvalidSessionIdException:
-            print("driver already closed")
+            app_log.error("driver already closed")
             return StatusInfo(ResponseStatus.unable_to_check, "driver closed")
         except NoSuchElementException:
+            app_log.error("status element not found")
             return self.resp_inv_path
         except Exception as ex:
-            print(f"Error: {ex}")
+            app_log.error(f"{ex}")
             return StatusInfo(ResponseStatus.unable_to_check, f"{ex}")
         finally:
             self.driver.quit()
